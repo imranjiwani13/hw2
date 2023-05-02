@@ -94,3 +94,108 @@ puts ""
 
 # Query the cast data and loop through the results to display the cast output for each movie.
 # TODO!
+
+
+rails new movie_database
+
+cd movie_database
+
+rails generate model Studio name:string
+rails generate model Movie title:string year_released:integer rated:string studio:references
+rails generate model Actor name:string
+rails generate model Role movie:references actor:references character_name:string
+
+rails db:migrate
+
+class Studio < ApplicationRecord
+    has_many :movies
+  end
+
+
+class Movie < ApplicationRecord
+    belongs_to :studio
+    has_many :roles
+    has_many :actors, through: :roles
+  end
+
+class Actor < ApplicationRecord
+    has_many :roles
+    has_many :movies, through: :roles
+  end
+  
+class Role < ApplicationRecord
+    belongs_to :movie
+    belongs_to :actor
+  end
+  
+
+# Destroy existing data
+Studio.destroy_all
+Actor.destroy_all
+Movie.destroy_all
+Role.destroy_all
+
+# Create Studio
+studio = Studio.create!(name: "Warner Bros.")
+
+# Create Movies
+batman_begins = studio.movies.create!(title: "Batman Begins", year_released: 2005, rated: "PG-13")
+the_dark_knight = studio.movies.create!(title: "The Dark Knight", year_released: 2008, rated: "PG-13")
+the_dark_knight_rises = studio.movies.create!(title: "The Dark Knight Rises", year_released: 2012, rated: "PG-13")
+
+# Create Actors
+christian_bale = Actor.create!(name: "Christian Bale")
+michael_caine = Actor.create!(name: "Michael Caine")
+liam_neeson = Actor.create!(name: "Liam Neeson")
+katie_holmes = Actor.create!(name: "Katie Holmes")
+gary_oldman = Actor.create!(name: "Gary Oldman")
+heath_ledger = Actor.create!(name: "Heath Ledger")
+aaron_eckhart = Actor.create!(name: "Aaron Eckhart")
+maggie_gyllenhaal = Actor.create!(name: "Maggie Gyllenhaal")
+tom_hardy = Actor.create!(name: "Tom Hardy")
+joseph_gordon_levitt = Actor.create!(name: "Joseph Gordon-Levitt")
+anne_hathaway = Actor.create!(name: "Anne Hathaway")
+
+# Create Roles
+batman_begins.roles.create!([{ actor: christian_bale, character_name: "Bruce Wayne" },
+                             { actor: michael_caine, character_name: "Alfred" },
+                             { actor: liam_neeson, character_name: "Ra's Al Ghul" },
+                             { actor: katie_holmes, character_name: "Rachel Dawes" },
+                             { actor: gary_oldman, character_name: "Commissioner Gordon" }])
+
+the_dark_knight.roles.create!([{ actor: christian_bale, character_name: "Bruce Wayne" },
+                               { actor: heath_ledger, character_name: "Joker" },
+                               { actor: aaron_eckhart, character_name: "Harvey Dent" },
+                               { actor: michael_caine, character_name: "Alfred" },
+                               { actor: maggie_gyllenhaal, character_name: "Rachel Dawes" }])
+
+the_dark_knight_rises.roles.create!([{ actor: christian_bale, character_name: "Bruce Wayne" },
+                                      { actor: gary_oldman, character_name: "Commissioner Gordon" },
+                                      { actor: tom_hardy, character_name: "Bane" },
+                                      { actor: joseph_gordon_levitt, character_name: "John Blake" },
+                                      { actor: anne_hathaway, character_name: "Selina Kyle" }])
+
+
+
+# Prints a header for the movies output
+puts "Movies"
+puts "======"
+puts ""
+
+# Query the movies data and loop through the results to display the movies output.
+movies = Movie.joins(:studio).select('movies.*, studios.name AS studio_name')
+movies.each do |movie|
+  puts "#{movie.title} (#{movie.year_released}) - Rated: #{movie.rated} - Studio: #{movie.studio_name}"
+end
+
+# Prints a header for the cast output
+puts ""
+puts "Top Cast"
+puts "========"
+puts ""
+
+# Query the cast data and loop through the results to display the cast output for each movie.
+roles = Role.joins(:movie, :actor).select('roles.*, movies.title AS movie_title, actors.name AS actor_name')
+roles.each do |role|
+  puts "#{role.movie_title}: #{role.actor_name} as #{role.character_name}"
+end
